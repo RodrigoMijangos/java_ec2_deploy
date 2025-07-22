@@ -29,17 +29,15 @@ jobs:
             - name: Print generated JAR path
               run: find build/libs -name "*.jar" -print
 
-            - name: Deploy to EC2
+            - name: Execute pre-deployment script on EC2 (Stop old app)
               uses: appleboy/ssh-action@v1.0.3
               with:
                 host: ${{secrets.EC2_HOST}}
                 username: ${{secrets.EC2_USER}}
                 key: ${{secrets.EC2_SSH_PRIVATE_KEY}}
                 script: |
-                    sudo pkill -f "java -jar /opt/my-java-app/my-java-app*.jar" || true
-                    rm -f /opt/my-java-app/my-java-app*.jar
+                    sudo /opt/apps/backend/scripts/pre-deploy
 
-                    echo "Deployment script for future use"
             - name: Copy JAR to  EC2
               uses: appleboy/scp-action@v1
               with: 
@@ -47,18 +45,13 @@ jobs:
                 username: ${{secrets.EC2_USER}}
                 key: ${{secrets.EC2_SSH_PRIVATE_KEY}}
                 source: "build/libs/*.jar"
-                target: "/opt/my-java-app/"
+                target: "/opt/apps/backend/"
 
-            - name: Restart App on EC2
+            - name: Execute post-deployment script on EC2 (Restart app and configure systemd)
               uses: appleboy/ssh-action@v1.0.3
               with:
                 host: ${{secrets.EC2_HOST}}
                 username: ${{secrets.EC2_USER}}
                 key: ${{secrets.EC2_SSH_PRIVATE_KEY}}
                 script: |
-                    sudo pkill -f "java -jar /opt/my-java-app/my-java-app*.jar" || true
-                    JAR_NAME=$(ls /opt/my-java-app/my-java-app*.jar | head -n 1) # Encontrar el JAR
-                    nohup java -jar $JAR_NAME > /dev/null 2>&1 &
-                    echo "Application started!"
-                    sleep 5
-                    ps aux | grep "java -jar /opt/my-java-app/my-java-app*.jar" | grep -v grep
+                    sudo /opt/apps/backend/scripts/post-deploy
