@@ -38,6 +38,15 @@ jobs:
             - name: Print generated JAR path
               run: find app/build/libs -name "*.jar" -print
 
+            - name: Move JAR to root for SCP
+              id: move_jar # Asignamos un ID a este paso para referenciar sus salidas
+              run: |
+                JAR_FULL_PATH=$(find app/build/libs -name "app_chida-*.jar" | head -n 1)
+                JAR_FILENAME=$(basename "$JAR_FULL_PATH")
+                mv "$JAR_FULL_PATH" "$JAR_FILENAME"
+                echo "JAR movido a la raíz: $JAR_FILENAME"
+                echo "moved_jar_filename=$JAR_FILENAME" >> $GITHUB_OUTPUT
+
             - name: Execute pre-deployment script on EC2 (Stop old app)
               uses: appleboy/ssh-action@v1.0.3
               with:
@@ -53,7 +62,7 @@ jobs:
                 host: ${{secrets.EC2_HOST}}
                 username: ${{secrets.EC2_USER}}
                 key: ${{secrets.EC2_SSH_PRIVATE_KEY}}
-                source: "app/build/libs/*.jar"
+                source: "${{ steps.move_jar.outputs.moved_jar_filename }}"
                 target: "/opt/apps/backend/"
 
             - name: Execute post-deployment script on EC2 (Restart app and configure systemd)
