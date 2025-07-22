@@ -36,7 +36,7 @@ jobs:
               run: ./gradlew clean shadowjar
 
             - name: Print generated JAR path
-              run: find build/libs -name "*.jar" -print
+              run: find app/build/libs -name "*.jar" -print
 
             - name: Execute pre-deployment script on EC2 (Stop old app)
               uses: appleboy/ssh-action@v1.0.3
