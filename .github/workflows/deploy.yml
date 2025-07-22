@@ -4,6 +4,12 @@ on:
     push:
         branches:
             - main
+    workflow_dispatch:
+        inputs:
+            branch:
+                description: 'Rama a desplegar'
+                required: true
+                default: 'develop' 
 
 jobs:
     build-and-deploy:
@@ -12,6 +18,9 @@ jobs:
         steps:
             - name: Checkout code
               uses:   actions/checkout@v4
+
+              with:
+                ref: ${{ github.event.inputs.branch || github.ref }}
 
             - name: Setup on jdk 21
               uses: actions/setup-java@v4
