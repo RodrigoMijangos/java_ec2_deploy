@@ -1,0 +1,17 @@
+[Unit]
+Description=My Java APP
+After=network.target
+
+[Service]
+User=git_deploy
+Group=deployers
+WorkingDirectory=/opt/apps/backend
+ExecStart=/bin/bash -c '/usr/bin/authbind --deep /usr/bin/java -jar $(ls /opt/apps/backend/app*.jar | head -n 1)'
+SuccessExitStatus=143
+StandardOutput=journal
+StandardError=journal
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
